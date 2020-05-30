@@ -1,0 +1,21 @@
+{
+  "name": "telegram-bot",
+  "version": "1.0.0",
+  "description": "This is a bot to play Battleship game on Telegram",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "kertnique",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kertnique/telegram-bot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kertnique/telegram-bot/issues"
+  },
+  "homepage": "https://github.com/kertnique/telegram-bot#readme"
+}
