@@ -2,6 +2,7 @@ let TelegramBot = require('node-telegram-bot-api');
 
 let token = "1122460821:AAEvt2V7-zz6dKuSScXAKCeKJP6Wk2m54_c";
 let bot = new TelegramBot(token, {polling: true});
+let games =[];
 
 class Game{
     construsctor(status, player1_id,player2_id,player1_name,player2_name,word=' ',guess=[]){
