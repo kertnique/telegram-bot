@@ -62,3 +62,25 @@ bot.onText(/join [0-9]+/,function(msg){
     }
     else bot.sendMessage(chat, "Sorry, you are already playing");
 });
+
+bot.onText(/exit/,function(msg){
+    bot.sendMessage(msg.chat.id,"Bye, see you later.");
+    if(game_id(msg.chat.id)!=-1){
+        let play  =game_id(msg.chat.id);
+        if(games[play].status==2){
+            if(msg.chat.id==games[play].player1_id){
+                bot.sendMessage(games[play].player2_id,"Sorry, player @"+msg.chat.username+" left the game.");
+                games[play].player1_id=games[play].player2_id;
+                games[play].player1_name=games[play].player2_name;
+                games[play].player2_id=0;
+                games[play].player2_name='';
+            }
+            else{
+                bot.sendMessage(games[play].player1_id,"Sorry, player @"+msg.chat.username+" left the game.");
+                games[play].player2_id=0;
+                games[play].player2_name='';
+            }
+        }
+        games[play].status--;    
+    }
+});
