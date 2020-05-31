@@ -63,6 +63,18 @@ bot.onText(/join [0-9]+/,function(msg){
     else bot.sendMessage(chat, "Sorry, you are already playing");
 });
 
+bot.onText(/begin ([A-z]|[a-z])+/,function(msg){
+    if(game_id(msg.chat.id)!=-1){
+        let game = game_id(msg.chat.id);
+         games[game].word=msg.text.toUpperCase().slice(7);
+         games[game].guess='0';
+            for(let i=1;i<games[game].word.length;i++){
+                games[game].guess+='0';
+            } 
+    }
+    else bot.sendMessage(msg.chat.id,"You haven't chosen a game.");
+    });
+
 bot.onText(/exit/,function(msg){
     bot.sendMessage(msg.chat.id,"Bye, see you later.");
     if(game_id(msg.chat.id)!=-1){
