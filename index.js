@@ -26,6 +26,23 @@ let  game_id =(id) =>{
     return -1;
 }
 
+let draw =() =>{
+    let inline_keyboard = [];
+      for (let i = 0; i < 4; i++) {
+        inline_keyboard.push([]);
+        for (let j = 0; j < 8; j++) {
+            if(65+(8*i)+j<91)
+           inline_keyboard[i].push({ text: String.fromCharCode(65+(8*i)+j), callback_data:  String.fromCharCode(65+(8*i)+j)});
+            else inline_keyboard[i].push({ text: ' ', callback_data: (' ').toString()});
+        }
+      }
+      for(let i=0;i<inline_keyboard.length;i++)
+        board = {
+        reply_markup: JSON.stringify({inline_keyboard})
+        }
+        return board;   
+}
+
 let output = (id) =>{
     let out = '';
     for(let i=0;i<games[id].word.length;i++){
@@ -123,20 +140,7 @@ bot.onText(/begin ([A-z]|[a-z])+/,function(msg){
                 games[game].guess+='0';
             }    
         if(games[game].status==2){
- 
-        let inline_keyboard = [];
-      for (let i = 0; i < 4; i++) {
-        inline_keyboard.push([]);
-        for (let j = 0; j < 8; j++) {
-            if(65+(8*i)+j<91)
-           inline_keyboard[i].push({ text: String.fromCharCode(65+(8*i)+j), callback_data:  String.fromCharCode(65+(8*i)+j)});
-            else inline_keyboard[i].push({ text: ' ', callback_data: (' ').toString()});
-        }
-      }
-      for(let i=0;i<inline_keyboard.length;i++)
-        board = {
-        reply_markup: JSON.stringify({inline_keyboard})
-        }   
+        let board = draw();
         let miss = 0;
         let move =0;
         while(miss<6&&win(game)!=1&&move==0){
