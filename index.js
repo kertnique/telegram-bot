@@ -38,12 +38,13 @@ const char = int => String.fromCharCode(int);
 const draw = () => {
   const inline_keyboard = [];
   const A_ascii = 65;
+  const Z_ascii = 90;
   const row = 4;
   const column = 8;
   for (let i = 0; i < row; i++) {
     inline_keyboard.push([]);
     for (let j = 0; j < column; j++) {
-      if (A_ascii + (column * i) + j < 91) {
+      if (A_ascii + (column * i) + j <= Z_ascii) {
         const letter = char(A_ascii + (column * i) + j);
         inline_keyboard[i].push({ text: letter,
           callback_data:  letter });
