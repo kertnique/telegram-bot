@@ -1,5 +1,5 @@
 /* eslint-disable camelcase */
-/* eslint-disable strict */
+'use strict';
 const TelegramBot = require('node-telegram-bot-api');
 
 class Player {
@@ -10,8 +10,8 @@ class Player {
 }
 
 class Game {
-  construsctor(status, player1, player2, word, guess) {
-    this.status = status;
+  construsctor(players, player1, player2, word, guess) {
+    this.players = players;
     this.player1 = player1;
     this.player2 = player2;
     this.word = word;
@@ -24,11 +24,10 @@ const bot = new TelegramBot(token, { polling: true });
 const games = [];
 
 
-const  game_id = id => {
+const  GameId = id => {
   for (let i = games.length - 1; i >= 0; i--) {
-    if (games[i].status !== 0) {
-      if (games[i].player1.id === id || games[i].player2.id === id) return i;
-    }
+    const { players, player1, player2 } = games[i];
+    if (players !== 0 && player1.id === id || player2.id === id) return i;
   }
   return -1;
 };
@@ -37,19 +36,18 @@ const char = int => String.fromCharCode(int);
 
 const draw = () => {
   const inline_keyboard = [];
-  const A_ascii = 65;
-  const Z_ascii = 90;
+  const Char_A = 65;
+  const Char_Z = 90;
   const row = 4;
   const column = 8;
   for (let i = 0; i < row; i++) {
     inline_keyboard.push([]);
     for (let j = 0; j < column; j++) {
-      if (A_ascii + (column * i) + j <= Z_ascii) {
-        const letter = char(A_ascii + (column * i) + j);
-        inline_keyboard[i].push({ text: letter,
-          callback_data:  letter });
-      } else inline_keyboard[i].push({ text: ' ',
-        callback_data: (' ').toString() });
+      if (Char_A + (column * i) + j <= Char_Z) {
+        const letter = char(Char_A + (column * i) + j);
+        inline_keyboard[i].push({ text: letter, callback_data:  letter });
+      } else
+        inline_keyboard[i].push({ text: ' ', callback_data: (' ').toString() });
     }
   }
   for (let i = 0; i < inline_keyboard.length; i++)
@@ -62,29 +60,31 @@ const draw = () => {
 const output = id => {
   let out = '';
   for (let i = 0; i < games[id].word.length; i++) {
-    if (games[id].guess[i] === 1) out += games[id].word[i];
-    else out += '_';
+    const game = games[id];
+    out += game.guess[i] === 1 ? game.word[i] : '_';
   }
   return out;
 };
 
 const win = game => {
-  let is_win = 1;
+  let IsWin = 1;
   for (let i = 0; i < games[game].word.length; i++) {
-    if (games[game].guess[i] === 0) is_win = 0;
+    if (games[game].guess[i] === 0) IsWin = 0;
   }
-  return is_win;
+  return IsWin;
 };
 
 const end = game => {
-  const id = games[game].player2.id;
-  const name = games[game].player2.name;
-  games[game].player2.id = games[game].player1.id;
-  games[game].player2.name = games[game].player1.name;
-  games[game].player1.id = id;
-  games[game].player1.name = name;
-  games[game].word = '';
-  games[game].guess = '';
+  const { id, name } = games[game].player2.id;
+  game = {
+    word: '',
+    guess: '',
+    player2: {
+      id: games[game].player1.id,
+      name: games[game].player1.name,
+    },
+    player1: { id, name },
+  };
 };
 
 bot.onText(/start|help/, msg => {
@@ -95,10 +95,10 @@ bot.onText(/start|help/, msg => {
 
 bot.onText(/create/, msg => {
   const chat = msg.chat.id;
-  if (game_id(chat) === -1) {
+  if (GameId(chat) === -1) {
     const i = games.length;
     games.push(new Game());
-    games[i].status = 1;
+    games[i].players = 1;
     games[i].player1 = new Player(chat, msg.chat.username);
     bot.sendMessage(chat, 'This is your game ID: ' + i + '\n');
     bot.sendMessage(chat, 'Share this number with person, to play with.');
@@ -107,12 +107,13 @@ bot.onText(/create/, msg => {
 
 bot.onText(/join [0-9]+/, msg => {
   const chat = msg.chat.id;
-  if (game_id(chat) === -1) {
-    const input_id = msg.text.slice(6);
+  if (GameId(chat) === -1) {
+    const cut = '/join '.size;
+    const input_id = msg.text.slice(cut);
     let yes = 0;
     while (yes === 0) {
-      if (games.length > input_id && games[input_id].status === 1) {
-        games[input_id].status = 2;
+      if (games.length > input_id && games[input_id].players === 1) {
+        games[input_id].players = 2;
         games[input_id].player2 = new Player(chat, msg.chat.username);
         yes = 1;
         const player1 = games[input_id].player1;
@@ -120,18 +121,21 @@ bot.onText(/join [0-9]+/, msg => {
         bot.sendMessage(chat, `Okay, you are playing with @${player1.name}`);
         bot.sendMessage(player1.id, `User @${player2.name} joined the game.
         To begin the game, use command /begin, after that type any word.`);
-      } else bot.sendMessage(chat, 'Sorry, wrong ID');
+      } else {
+        bot.sendMessage(chat, 'Sorry, wrong ID');
+      }
     }
-  } else bot.sendMessage(chat, 'Sorry, you are already playing');
+  } else {
+    bot.sendMessage(chat, 'Sorry, you are already playing');
+  }
 });
 
 bot.onText(/exit/, msg => {
   bot.sendMessage(msg.chat.id, 'Bye, see you later.');
-  if (game_id(msg.chat.id) !== -1) {
-    const game  = game_id(msg.chat.id);
-    const player1 = games[game].player1;
-    const player2 = games[game].player2;
-    if (games[game].status === 2) {
+  if (GameId(msg.chat.id) !== -1) {
+    const game  = GameId(msg.chat.id);
+    const { player1, player2 } = games[game];
+    if (games[game].players === 2) {
       if (msg.chat.id === player1.id) {
         bot.sendMessage(player2.id, `Player @${player1.name} left the game.`);
         player1.id = player2.id;
@@ -144,25 +148,26 @@ bot.onText(/exit/, msg => {
         games[game].player2.name = '';
       }
     }
-    games[game].status--;
+    games[game].players--;
   }
 });
 
 bot.onText(/begin ([A-z]|[a-z])+/, msg => {
-  if (game_id(msg.chat.id) !== -1) {
-    const game = game_id(msg.chat.id);
-    games[game].word = msg.text.toUpperCase().slice(7);
+  if (GameId(msg.chat.id) !== -1) {
+    const game = GameId(msg.chat.id);
+    const cut = '/begin '.size;
+    games[game].word = msg.text.toUpperCase().slice(cut);
     games[game].guess = '0';
-    const player1 = games[game].player1;
-    const player2 = games[game].player2;
+    const { player1, player2 } = games[game];
     for (let i = 1; i < games[game].word.length; i++) {
       games[game].guess += '0';
     }
-    if (games[game].status === 2) {
+    if (games[game].players === 2) {
       const board = draw();
       let miss = 0;
       let move = 0;
-      while (miss < 6 && win(game) !== 1 && move === 0) {
+      const lose = 6;
+      while (miss < lose && win(game) !== 1 && move === 0) {
         let letter;
         bot.sendMessage(player2.id, 'Please choose a letter', board);
         move = 1;
@@ -179,7 +184,9 @@ bot.onText(/begin ([A-z]|[a-z])+/, msg => {
             if (games[game].word[i] === letter) {
               games[game].guess += '1';
               move_hit = 1;
-            } else  games[game].guess += guess_old[i];
+            } else {
+              games[game].guess += guess_old[i];
+            }
           }
           if (move_hit === 0) {
             bot.sendMessage(player2.id, 'You have missed.');
@@ -190,15 +197,19 @@ bot.onText(/begin ([A-z]|[a-z])+/, msg => {
           bot.sendMessage(player2.id, output(game));
         });
       }
-      if (miss === 6)
-        bot.sendMessage(player2.id, `The word was ${games[game].word}.`);
-      else bot.sendMessage(player2.id, 'Congratulations.');
+      const msg = miss === lose ?
+        `The word was ${games[game].word}.` :
+        'Congratulations.';
+      bot.sendMessage(player2.id, msg);
       end(game);
       bot.sendMessage(player1.id, `To exit, type /exit\n 
       To begin new game, type /begin and any word`);
       bot.sendMessage(player1.id, `To exit, type /exit\n 
       Else, wait for the other player to choose word`);
-    } else bot.sendMessage(msg.chat.id, 'You cannot play alone.');
-  } else bot.sendMessage(msg.chat.id, 'You haven\'t chosen a game.');
+    } else {
+      bot.sendMessage(msg.chat.id, 'You cannot play alone.');
+    }
+  } else {
+    bot.sendMessage(msg.chat.id, 'You haven\'t chosen a game.');
+  }
 });
-
