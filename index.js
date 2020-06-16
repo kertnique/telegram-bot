@@ -49,6 +49,7 @@ const draw = () => {
         inlineKeyboard[i].push({ text: ' ', callbackData: (' ').toString() });
     }
   }
+  let board;
   for (let i = 0; i < inlineKeyboard.length; i++)
     board = {
       replyMarkup: JSON.stringify({ inlineKeyboard })
